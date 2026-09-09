@@ -1,0 +1,654 @@
+/*
+ * Sidecart panel styles.
+ *
+ * Sized for a Chrome side panel, which is narrow (320–480 px) and tall. The
+ * harness renders the same panel in a fixed rail so both look identical.
+ */
+
+:root {
+  --sc-bg: #ffffff;
+  --sc-ink: #14181f;
+  --sc-muted: #5d6470;
+  --sc-faint: #8a919d;
+  --sc-line: #e3e6eb;
+  --sc-soft: #f5f6f8;
+  --sc-accent: #1a5cff;
+  --sc-warn: #b26a00;
+  --sc-warn-bg: #fff6e5;
+  --sc-danger: #c7413b;
+  --sc-danger-bg: #fdf1f0;
+  --sc-good: #1b7a48;
+  --sc-radius: 10px;
+  --sc-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  --sc-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.sc-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--sc-bg);
+  color: var(--sc-ink);
+  font: 14px/1.5 var(--sc-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- header ---------- */
+
+.sc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--sc-line);
+}
+
+.sc-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--sc-accent), #7aa2ff);
+}
+
+.sc-name {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.sc-badge {
+  font: 600 10px/1 var(--sc-font);
+  letter-spacing: 0.08em;
+  padding: 5px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.sc-badge.is-live {
+  color: var(--sc-good);
+  background: #e8f5ee;
+}
+
+.sc-badge.is-sim {
+  color: var(--sc-warn);
+  background: var(--sc-warn-bg);
+}
+
+.sc-warn {
+  padding: 8px 14px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--sc-warn);
+  background: var(--sc-warn-bg);
+  border-bottom: 1px solid #f2e2c4;
+}
+
+.sc-warn summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.sc-warn summary::-webkit-details-marker {
+  display: none;
+}
+
+.sc-warn summary::after {
+  content: ' Requirements ▸';
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.sc-warn[open] summary::after {
+  content: ' Requirements ▾';
+}
+
+.sc-warn p {
+  margin: 6px 0 0;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.sc-notice {
+  margin: 0;
+  padding: 9px 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--sc-muted);
+  background: var(--sc-soft);
+  border-bottom: 1px solid var(--sc-line);
+}
+
+.sc-store {
+  margin: 0;
+  padding: 9px 14px;
+  font-size: 12px;
+  color: var(--sc-muted);
+  background: var(--sc-soft);
+  border-bottom: 1px solid var(--sc-line);
+}
+
+/* ---------- thread ---------- */
+
+.sc-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 14px 18px;
+  scroll-padding-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* A tall panel with one short exchange used to leave most of itself empty.
+   Pushing the first child down anchors the conversation to the composer, the
+   way every chat surface does. At rest there is no conversation to anchor,
+   only the suggestions, and pushing those to the bottom left a void that read
+   as a layout bug — so the rule applies once a message exists. */
+.sc-thread > .sc-msg:first-child {
+  margin-top: auto;
+}
+
+.sc-msg.is-user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 14px 14px 3px 14px;
+  background: #eef1f6;
+  color: var(--sc-ink);
+}
+
+.sc-msg.is-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sc-text {
+  white-space: pre-wrap;
+}
+
+.sc-meta {
+  font-size: 11px;
+  color: var(--sc-faint);
+}
+
+/* ---------- steps ---------- */
+
+.sc-steps:empty {
+  display: none;
+}
+
+.sc-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 10px;
+  border: 1px solid var(--sc-line);
+  border-radius: var(--sc-radius);
+  background: var(--sc-soft);
+  font-size: 12px;
+}
+
+.sc-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--sc-muted);
+}
+
+.sc-step-label {
+  font-weight: 600;
+  color: var(--sc-ink);
+}
+
+.sc-funnel {
+  display: block;
+  padding-bottom: 7px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--sc-line);
+}
+
+.sc-figure {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.sc-figure-was {
+  font: 500 15px/1 var(--sc-font);
+  color: var(--sc-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.sc-figure-arrow {
+  color: var(--sc-faint);
+  font-size: 13px;
+}
+
+.sc-figure-now {
+  font: 650 22px/1 var(--sc-font);
+  color: var(--sc-ink);
+}
+
+.sc-figure-unit {
+  font-size: 12px;
+  color: var(--sc-muted);
+}
+
+.sc-figure-sub {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--sc-faint);
+}
+
+.sc-tool-name {
+  font-family: var(--sc-mono);
+  font-size: 11px;
+  color: var(--sc-ink);
+  background: #fff;
+  border: 1px solid var(--sc-line);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.sc-tool-args {
+  font-family: var(--sc-mono);
+  font-size: 11px;
+  color: var(--sc-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sc-raw {
+  margin-left: auto;
+  font: 500 10px/1 var(--sc-mono);
+  color: var(--sc-faint);
+  background: none;
+  border: 1px solid var(--sc-line);
+  border-radius: 4px;
+  padding: 3px 5px;
+  cursor: pointer;
+}
+
+.sc-raw:hover {
+  color: var(--sc-ink);
+  border-color: #b9c0cb;
+}
+
+.sc-raw-body {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  padding: 7px 8px;
+  font: 11px/1.45 var(--sc-mono);
+  background: #fff;
+  border: 1px solid var(--sc-line);
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.sc-tick {
+  color: var(--sc-good);
+  font-weight: 700;
+}
+
+.sc-spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--sc-line);
+  border-top-color: var(--sc-accent);
+  border-radius: 50%;
+  animation: sc-spin 0.7s linear infinite;
+}
+
+@keyframes sc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sc-untrusted {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--sc-muted);
+  background: #eceff3;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.sc-guard {
+  font-weight: 500;
+}
+
+.sc-guard.is-held {
+  color: #8f2f2a;
+}
+
+.sc-guard.is-refused {
+  color: var(--sc-danger);
+}
+
+.sc-guard.is-approved {
+  color: var(--sc-good);
+}
+
+.sc-guard.is-untrusted-read {
+  color: #8f2f2a;
+}
+
+.sc-guard.is-quiet {
+  color: var(--sc-faint);
+  font-weight: 400;
+}
+
+/* ---------- approval ---------- */
+
+.sc-approval {
+  margin: 2px 0 4px;
+  scroll-margin-bottom: 18px;
+  padding: 13px;
+  border: 1px solid var(--sc-line);
+  border-radius: var(--sc-radius);
+  background: #fff;
+  box-shadow: 0 4px 16px rgb(20 24 31 / 8%);
+}
+
+.sc-approval.is-alarming {
+  border-color: #dfc4c2;
+  box-shadow: 0 4px 16px rgb(20 24 31 / 10%);
+}
+
+.sc-approval-title {
+  margin: 0 0 10px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.is-alarming .sc-approval-title {
+  color: #8f2f2a;
+}
+
+.sc-items {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* A row the shopper asked for and a row smuggled in by page text must not
+   look the same. The pipeline already knows which is which. */
+.sc-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.sc-item-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-item-cost {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.sc-item.is-suspect {
+  background: var(--sc-danger-bg);
+  border-left: 3px solid var(--sc-danger);
+  padding-left: 9px;
+}
+
+.sc-item-note {
+  flex-basis: 100%;
+  font: 650 10px/1.3 var(--sc-font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8f2f2a;
+}
+
+/* The asked-for line is labelled too. Labelling only the suspect one left the
+   other reading as unexplained, and its price as the whole cost. */
+.sc-item-note.is-ok {
+  color: var(--sc-faint);
+  font-weight: 600;
+}
+
+.sc-item-cost.is-unknown {
+  font-weight: 500;
+  font-style: italic;
+  color: #8f2f2a;
+}
+
+.sc-total {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 10px;
+  padding: 7px 8px 0;
+  border-top: 1px solid var(--sc-line);
+  font-size: 13px;
+  color: var(--sc-muted);
+}
+
+.sc-total b {
+  color: var(--sc-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-approval-args {
+  margin: 0 0 10px;
+  padding: 8px;
+  font: 12px var(--sc-mono);
+  background: var(--sc-soft);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.sc-approval-flag {
+  margin: 0 0 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #8f2f2a;
+}
+
+.sc-approval-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sc-btn {
+  width: 100%;
+  padding: 10px 12px;
+  font: 600 13px var(--sc-font);
+  border-radius: 8px;
+  border: 1px solid var(--sc-line);
+  background: #fff;
+  color: var(--sc-ink);
+  cursor: pointer;
+}
+
+/* The safe action is the one with weight behind it. White on a solid fill,
+   because dark-on-dark failed to read at projector distance. */
+.sc-btn.is-primary {
+  background: var(--sc-ink);
+  border-color: var(--sc-ink);
+  color: #fff;
+}
+
+/* The risky action is available, not inviting. */
+.sc-link {
+  align-self: center;
+  padding: 4px 6px;
+  font: 500 12px var(--sc-font);
+  background: none;
+  border: none;
+  color: var(--sc-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.sc-link:hover {
+  color: var(--sc-ink);
+}
+
+.sc-btn:hover {
+  filter: brightness(0.97);
+}
+
+/* The browser default ring was the only blue in the panel. */
+.sc-btn:focus-visible,
+.sc-link:focus-visible {
+  outline: 2px solid var(--sc-ink);
+  outline-offset: 2px;
+}
+
+.sc-approval-tool {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--sc-faint);
+}
+
+.sc-approval-tool code {
+  font-family: var(--sc-mono);
+}
+
+/* ---------- resting surface ---------- */
+
+/* Shown before the first question, so the panel is never an empty column and
+   the figure that carries the argument is on screen from the start. */
+.sc-surface {
+  padding: 18px 14px;
+  background: var(--sc-soft);
+  border-bottom: 1px solid var(--sc-line);
+}
+
+.sc-surface-fig {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font: 650 42px/1 var(--sc-font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-surface-fig span {
+  font: 500 12px/1 var(--sc-font);
+  letter-spacing: 0;
+  color: var(--sc-muted);
+}
+
+.sc-surface-sub {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--sc-muted);
+}
+
+/* ---------- suggestions ---------- */
+
+.sc-suggests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.sc-suggests-label {
+  width: 100%;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sc-faint);
+}
+
+.sc-chip {
+  font: 13px var(--sc-font);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-line);
+  background: #fff;
+  color: var(--sc-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sc-chip:hover {
+  border-color: var(--sc-accent);
+  color: var(--sc-accent);
+}
+
+/* ---------- composer ---------- */
+
+.sc-composer {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--sc-line);
+}
+
+.sc-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  font: 14px var(--sc-font);
+  border: 1px solid var(--sc-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sc-ink);
+}
+
+.sc-input:focus {
+  outline: 2px solid var(--sc-accent);
+  outline-offset: -1px;
+}
+
+.sc-send {
+  padding: 9px 14px;
+  font: 600 14px var(--sc-font);
+  border: none;
+  border-radius: 8px;
+  background: var(--sc-ink);
+  color: #fff;
+  cursor: pointer;
+}
+
+.sc-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sc-foot {
+  margin: 0;
+  padding: 0 14px 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--sc-faint);
+}

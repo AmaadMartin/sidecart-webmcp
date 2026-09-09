@@ -1,0 +1,445 @@
+/*
+ * The stand-in storefront.
+ *
+ * Judged against three live Shopify stores — allbirds, brooklinen and death
+ * wish coffee. They share almost nothing in brand and almost everything in
+ * structure: an announcement strip, a full-bleed nav bar with an icon bag, a
+ * breadcrumb, a named collection with a product count, and a grid whose cards
+ * are mostly picture.
+ *
+ * Two rules hold the whole thing together:
+ *
+ *   1. It must read as a shop. The premise of the demo is "this is a normal
+ *      store, and it publishes agent tools". A page that reads as a test rig
+ *      takes the premise down with it.
+ *   2. It must lose to the panel. Every choice here is deliberately one step
+ *      quieter than the reference it came from: no photography, no hero band,
+ *      no saturated promo tile. Structure, not spectacle.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --hs-paper: #f4f0e9;
+  --hs-card: #fffdfa;
+  --hs-ink: #1b1f26;
+  --hs-muted: #6b7280;
+  --hs-faint: #9aa1ac;
+  --hs-line: #e6e1d8;
+  --hs-rig: #1b2029;
+}
+
+body {
+  margin: 0;
+  background: var(--hs-paper);
+  color: var(--hs-ink);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- demo rig ---------- */
+
+.hs-rig {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  height: 34px;
+  background: var(--hs-rig);
+  color: #cbd2dc;
+  font: 500 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+}
+
+.hs-rig-label {
+  color: #7c8695;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.hs-rig-switch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.hs-rig-switch input {
+  width: 13px;
+  height: 13px;
+  accent-color: #d0524b;
+  cursor: pointer;
+}
+
+.hs-rig-btn {
+  font: inherit;
+  color: #cbd2dc;
+  background: none;
+  border: 1px solid #39424f;
+  border-radius: 5px;
+  padding: 4px 9px;
+  cursor: pointer;
+}
+
+.hs-rig-btn:hover {
+  border-color: #6b7686;
+  color: #fff;
+}
+
+.hs-rig-spacer {
+  flex: 1;
+}
+
+.hs-rig-note {
+  color: #7c8695;
+}
+
+/* ---------- layout ---------- */
+
+.hs-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 480px;
+  align-items: start;
+  min-height: calc(100vh - 34px);
+}
+
+.hs-store {
+  min-width: 0;
+}
+
+/* ---------- store chrome ---------- */
+
+.hs-announce {
+  padding: 8px 24px;
+  background: #26302c;
+  color: #e8e4dc;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.hs-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 24px;
+  height: 62px;
+  background: #fbf9f5;
+  border-bottom: 1px solid var(--hs-line);
+}
+
+.hs-word {
+  font: 700 17px/1 var(--hs-serif, Georgia, 'Times New Roman', serif);
+  letter-spacing: 0.02em;
+  color: var(--hs-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hs-word span {
+  font-weight: 400;
+  color: var(--hs-muted);
+  margin-left: 5px;
+}
+
+.hs-nav {
+  display: flex;
+  gap: 22px;
+  margin-left: 10px;
+}
+
+.hs-nav a {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--hs-muted);
+  text-decoration: none;
+}
+
+.hs-nav a:hover {
+  color: var(--hs-ink);
+}
+
+.hs-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.hs-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.hs-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: var(--hs-ink);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hs-bag-count {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--hs-ink);
+  color: #fff;
+  font: 600 10px/16px -apple-system, sans-serif;
+  text-align: center;
+}
+
+/* The cart is a demo beat: when the assistant changes it, it has to be
+   visible from the back of a room, then settle back down. */
+.hs-bag.is-hot .hs-bag-count {
+  animation: hs-pop 0.5s ease;
+  background: #1b7a48;
+}
+
+@keyframes hs-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.55); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- body ---------- */
+
+.hs-body {
+  padding: 20px 24px 56px;
+  max-width: 1000px;
+}
+
+.hs-crumb {
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: var(--hs-faint);
+}
+
+.hs-collection {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hs-collection h1 {
+  margin: 0;
+  font: 400 30px/1.1 Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.01em;
+}
+
+.hs-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hs-faint);
+}
+
+/* ---------- grid ---------- */
+
+.hs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 26px 16px;
+}
+
+/* Real product cards are mostly picture and carry almost no chrome. Ours were
+   45% image inside a bordered box with three lines of spec copy; the
+   references run 77-79% image with three short lines under it. */
+.hs-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hs-thumb {
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.hs-thumb svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Scenery. Legible, never the loudest thing on the screen. */
+  opacity: 0.86;
+}
+
+.hs-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-top: 11px;
+}
+
+.hs-card-title {
+  margin: 0;
+  font: 600 12px/1.35 inherit;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.hs-card-note {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--hs-muted);
+}
+
+.hs-card-price {
+  /* Pushed to the foot of the card, so prices line up across a row whether or
+     not a name wraps. Reserving two title lines instead left a visible gap
+     under every one-line name. */
+  margin: 5px 0 0;
+  padding-top: 5px;
+  margin-top: auto;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The flagged listing keeps its signal and loses its area: a rule and a
+   label, not a filled red panel that outshouts the panel's own warning. */
+.hs-card.is-flagged .hs-thumb {
+  box-shadow: inset 0 0 0 2px #d0524b;
+}
+
+.hs-card-flag {
+  display: inline-block;
+  margin: 9px 0 0;
+  font: 700 10px/1 inherit;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #a33a34;
+}
+
+.is-flagged .hs-card-title {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #7d3a37;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- cart ---------- */
+
+.hs-cart-block {
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hs-line);
+}
+
+.hs-cart-block h2 {
+  margin: 0 0 12px;
+  font: 600 11px/1 inherit;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hs-faint);
+}
+
+.hs-cart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hs-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 13px;
+  background: var(--hs-card);
+  border: 1px solid var(--hs-line);
+  border-radius: 8px;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.hs-line-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.hs-line.is-unexpected {
+  border-color: #e6bdb9;
+  background: #fdf4f3;
+}
+
+.hs-line-note {
+  font-size: 11px;
+  font-weight: 650;
+  color: #a33a34;
+}
+
+.hs-empty {
+  font-size: 13px;
+  color: var(--hs-faint);
+}
+
+.hs-cart-total {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--hs-muted);
+  text-align: right;
+}
+
+.hs-cart-total b {
+  color: var(--hs-ink);
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+}
+
+.hs-foot {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hs-line);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--hs-faint);
+  max-width: 64ch;
+}
+
+/* ---------- rail ---------- */
+
+/* A 1px rule vanishes on a projector. The panel is a separate object, so it
+   gets a gap and a shadow rather than a line. */
+.hs-rail {
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 34px);
+  background: #fff;
+  border-left: 1px solid #d8d2c8;
+  box-shadow: -16px 0 34px rgb(27 32 41 / 9%);
+  overflow: hidden;
+  z-index: 2;
+}
+
+@media (max-width: 1180px) {
+  .hs-layout {
+    grid-template-columns: minmax(0, 1fr) 420px;
+  }
+
+  .hs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

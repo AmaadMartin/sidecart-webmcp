@@ -1,0 +1,41 @@
+{
+  "name": "sidecart-webmcp",
+  "version": "1.0.0",
+  "description": "A shopping assistant that runs on Chrome's built-in on-device model and drives a store's own WebMCP tools, built with ADK for TypeScript.",
+  "keywords": [
+    "adk",
+    "typescript",
+    "agent",
+    "browser",
+    "webmcp",
+    "shopify",
+    "gemini-nano",
+    "prompt-api",
+    "on-device",
+    "prompt-injection"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "serve": "node build.mjs --dev && node scripts/serve.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node run-tests.mjs tests/webmcp.test.ts && node run-tests.mjs tests/narrow.test.ts && node run-tests.mjs tests/guard.test.ts && node run-tests.mjs tests/agent.test.ts",
+    "check": "npm run typecheck && npm run build && npm test",
+    "record": "node build.mjs && node scripts/record-demo.mjs --out demo.mp4",
+    "doctor": "node scripts/doctor.mjs",
+    "patch:adk": "node scripts/patch-adk.mjs"
+  },
+  "dependencies": {
+    "@google/adk": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.2",
+    "@types/dom-chromium-ai": "^0.0.17",
+    "esbuild": "^0.28.1",
+    "puppeteer-core": "^25.4.0",
+    "typescript": "^5.9.3"
+  }
+}

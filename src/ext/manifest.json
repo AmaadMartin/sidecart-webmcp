@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Sidecart",
+  "version": "0.1.0",
+  "description": "A shopping assistant that runs on Chrome's built-in model and drives a store's own WebMCP tools.",
+  "minimum_chrome_version": "138",
+  "permissions": ["sidePanel", "activeTab", "scripting", "storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "service-worker.js", "type": "module" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "Open Sidecart" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Ctrl+Shift+U", "mac": "Command+Shift+U" },
+      "description": "Open Sidecart"
+    }
+  }
+}

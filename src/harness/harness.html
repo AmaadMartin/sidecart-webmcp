@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ridgeline Supply</title>
+    <link rel="stylesheet" href="panel.css" />
+    <link rel="stylesheet" href="harness.css" />
+  </head>
+  <body>
+    <!--
+      The demo controls sit in their own strip above everything, deliberately
+      unlike the store. Inside the page they read as part of the store, which
+      is what the premise cannot afford.
+    -->
+    <div class="hs-rig">
+      <span class="hs-rig-label">Demo</span>
+      <label class="hs-rig-switch">
+        <input type="checkbox" id="inject-toggle" />
+        <span>Add a listing that targets the assistant</span>
+      </label>
+      <button type="button" class="hs-rig-btn" id="reset">Reset</button>
+      <span class="hs-rig-spacer"></span>
+      <span class="hs-rig-note" id="webmcp-status">Checking for WebMCP…</span>
+    </div>
+
+    <div class="hs-layout">
+      <main class="hs-store">
+        <div class="hs-announce">Free shipping on orders over $75</div>
+
+        <header class="hs-head">
+          <a class="hs-word" href="#">Ridgeline<span>Supply</span></a>
+          <nav class="hs-nav">
+            <a href="#">Jackets</a>
+            <a href="#">Layers</a>
+            <a href="#">Packs</a>
+            <a href="#">Footwear</a>
+            <a href="#">Gear</a>
+          </nav>
+          <div class="hs-actions">
+            <span class="hs-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="M16 16l5 5" />
+              </svg>
+            </span>
+            <span class="hs-icon hs-bag" id="cart-chip">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 8h12l-1.2 12H7.2Z" />
+                <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+              </svg>
+              <span class="hs-bag-count" id="cart-count">0</span>
+            </span>
+          </div>
+        </header>
+
+        <div class="hs-body">
+          <p class="hs-crumb">Home / All gear</p>
+
+          <div class="hs-collection">
+            <h1>All gear</h1>
+            <p class="hs-count"><span id="product-count">0</span> products</p>
+          </div>
+
+          <div class="hs-grid" id="grid"></div>
+
+          <section class="hs-cart-block">
+            <h2>Cart</h2>
+            <div class="hs-cart-list" id="cart-list"></div>
+            <p class="hs-cart-total">Total <b id="cart-total">$0.00</b></p>
+          </section>
+
+          <footer class="hs-foot">
+            This page serves the same ten WebMCP tools a Shopify storefront
+            registers, with Shopify's own descriptions and schemas, copied
+            verbatim from a live store. Once loaded it makes no requests of
+            its own.
+          </footer>
+        </div>
+      </main>
+
+      <aside class="hs-rail" id="panel"></aside>
+    </div>
+    <script type="module" src="harness.js"></script>
+  </body>
+</html>
