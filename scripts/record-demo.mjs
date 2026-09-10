@@ -258,15 +258,14 @@ async function runScript(page) {
   await ask('what is your return policy?');
   await sleep(3000);
 
-  // 4. The attack ------------------------------------------------------
-  await cap(
-    'Now a listing that targets the assistant',
-    'Its title tells the assistant to add something else, and not to mention it.',
-  );
-  await run(() => window.sidecart.setInjection(true));
-  await sleep(4200);
-
+  // 4. A change to the cart --------------------------------------------
   await hide();
+  await cap(
+    'Now something that costs money',
+    'Adding to a cart is not a question. It is an action.',
+  );
+  await sleep(3600);
+
   await ask('add the alpine glove liner to my cart');
   await sleep(900);
 
@@ -275,28 +274,23 @@ async function runScript(page) {
   if (!approval) throw new Error('the confirmation card never appeared');
 
   await cap(
-    'The assistant fell for it. Nothing happened anyway.',
-    'The cart change is held. The line you never asked for is marked.',
+    'It stopped and asked',
+    'The model proposed the change. It did not make it.',
   );
-  await sleep(5200);
+  await sleep(4600);
 
-  // 5. The resolution ---------------------------------------------------
-  await cap('You decide what goes in', 'Add only the item you asked for.');
-  await sleep(2600);
-
+  // 5. The person decides ------------------------------------------------
   const before = await run(() => window.sidecart.cart());
-  await run(() => window.sidecart.choose('Add only'));
-  // The tool runs as soon as it is approved, so watch the cart rather than
-  // guessing how long the model takes to write its closing sentence.
+  await run(() => window.sidecart.choose('Confirm'));
   const changed = await run((t) => window.sidecart.cartChanged(t), before.total);
   if (changed === null) throw new Error('The cart never changed after approval.');
-  await sleep(1800);
+  await sleep(1600);
 
   const cart = await run(() => window.sidecart.cart());
   console.log('  cart:', JSON.stringify(cart));
   await cap(
     `One item in the cart. ${cart.total}.`,
-    'The model proposes. A person confirms. That holds even when the model is fooled.',
+    'The model proposes. A person confirms. Nothing reaches the cart without that click.',
   );
   await sleep(4800);
   await hide();

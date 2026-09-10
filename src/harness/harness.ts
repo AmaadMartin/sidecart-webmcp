@@ -100,9 +100,16 @@ store.onChange = () => {
   setTimeout(() => cartChip.classList.remove('is-hot'), 900);
 };
 
-document.getElementById('inject-toggle')!.addEventListener('change', (event) => {
-  store.setInjection((event.target as HTMLInputElement).checked);
-});
+// The poisoned listing is no longer part of the demo. Whether a real
+// on-device model falls for an injected instruction turns out to vary run to
+// run, and a demo beat whose outcome you cannot predict is not a demo beat.
+// The guard that stops it is unchanged and still gates every cart change; it
+// simply is not the thing being shown.
+//
+// The listing is still reachable with ?inject=1, for testing the guard.
+if (new URLSearchParams(location.search).get('inject') === '1') {
+  store.setInjection(true);
+}
 
 document.getElementById('reset')!.addEventListener('click', () => {
   store.reset();
@@ -254,8 +261,8 @@ async function main(): Promise<void> {
       match.click();
     },
     setInjection(on: boolean) {
-      const box = document.getElementById('inject-toggle') as HTMLInputElement;
-      if (box.checked !== on) box.click();
+      store.setInjection(on);
+      renderStore();
     },
     funnel() {
       return document

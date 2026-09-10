@@ -108,7 +108,11 @@ fooled, which is what makes it worth relying on.
 - **A human gate on every cart change**, showing the exact line items, marking
   any the shopper never asked for, and offering to add only the rest.
 - **Injection detection.** Suspicious phrasing in untrusted tool output is
-  flagged. This is a heuristic and it is evadable — the gate is the defence.
+  flagged, and a line the shopper never asked for is marked as such. This is a
+  heuristic and it is evadable; the gate is the defence. It is exercised by the
+  tests and by `?inject=1`, and is deliberately not part of the demo run,
+  because whether a real model falls for an injected instruction varies run to
+  run.
 - **An offline harness** that registers Shopify's real ten tool definitions,
   copied verbatim from a live store, so the demo needs no network and poses the
   same problem.
@@ -203,11 +207,10 @@ Nothing here is Shopify-specific — it reads whatever tools a page registers.
 
   A different tool is chosen, and the figure changes.
 
-- Tick **Add a listing that targets the assistant** in the strip at the top,
-  then ask `add the alpine glove liner to my cart`
+- `add the alpine glove liner to my cart`
 
-  A product title now carries an instruction aimed at the assistant. Watch what
-  the panel does with it.
+  A cart change is held. The card names the item and the price, and nothing
+  happens until you confirm.
 
 ## Commands
 

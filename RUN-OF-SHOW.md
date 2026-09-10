@@ -20,7 +20,7 @@ on stage.
 **3. Rehearse against the harness.** `npm run serve`, then
 <http://localhost:8901/harness.html>. It serves from your own machine, so
 conference wifi cannot break it. Leave this tab open during the talk, and ask
-it one warm-up question, so the 3:30 beat is not a cold session's first call.
+it one warm-up question, so the 3:00 beat is not a cold session's first call.
 
 **4. Open a real Shopify store too, and reload the tab.** The content script
 does not attach to tabs that were already open. Any Liquid storefront works;
@@ -32,7 +32,17 @@ the panel. The toolbar icon works too.
 **6. Record a backup video.** Non-negotiable. Chrome evicts the model when free
 disk drops below 10 GB.
 
-**7. Decide your fallback line.** If the model is gone, the badge says so and
+**7. The prompt-injection beat is not in the demo.**
+
+It used to be. Whether a real on-device model falls for an injected instruction
+varies run to run, and a climax whose outcome you cannot predict is not a
+climax. The guard is unchanged and still gates every cart change; it is simply
+not the thing being shown. Say it in words at 4:50 instead.
+
+The poisoned listing is still there behind `?inject=1` if you want to exercise
+the guard, but do not put it in a live run.
+
+**8. Decide your fallback line.** If the model is gone, the badge says so and
 everything still runs. Say it out loud: *"no model on this machine right now, so
 the reasoning is scripted — the tools, the funnel and the gate are all real."*
 Never let scripted output be taken for inference.
@@ -48,10 +58,10 @@ Never let scripted output be taken for inference.
 | 1:10 | Point at the big figure in the panel: `10.5k → 645 chars of tools`. | **The technical beat.** Ten tools are 10,469 characters. The on-device model cannot hold that. We send a one-line menu, ask which tools apply, and equip only those. The second number changes per question — one tool for a search, two for a cart change — so read whatever is on screen. |
 | 1:50 | Open DevTools → Network. No model traffic. Point at the catalog calls that *are* there. | Say it precisely: there is no model server, and the search request is the store's own — the same one its search box makes. Do not say offline. |
 | 2:20 | Ask *"add the cirrus down jacket to my cart"*. Confirmation card appears. Click confirm. Cart updates. | It is an agent, and a person is in the loop. |
-| 3:00 | Switch to the harness tab, which you left open and warmed up. Tick **Add a listing that tries to instruct the assistant**. | Show the poisoned product card. Read the title out loud. |
-| 3:30 | Ask *"add the alpine glove liner to my cart"*. | **The money shot.** The assistant reads the listing, is told to secretly add a care plan, and proposes exactly that. |
-| 4:10 | Let the card sit on screen. | It stopped. It shows both line items. It marks the one you never asked for, and says it was never in the results. |
-| 4:40 | Click **Add only Alpine Glove Liner**. Cart gets one item. | The gate is not all-or-nothing. The shopper still gets what they wanted. |
+| 3:00 | Ask *"add the alpine glove liner to my cart"*. | Now something that costs money. Adding to a cart is not a question, it is an action. |
+| 3:40 | Let the confirmation card sit on screen. | **The beat.** It stopped. The model proposed the change and did not make it. The card names the item and the price. |
+| 4:20 | Click **Confirm**. The cart goes to one item, $32.00. | The model proposes. A person confirms. Nothing reaches the cart without that click. |
+| 4:50 | Say the part you are not showing. | Tool output is written by the store and its customers, so it is attacker-controllable — Shopify marks five of its ten tools `untrustedContentHint`. This same gate is what stops injected text spending someone's money, and it holds whether or not the model was fooled. |
 | 5:10 | Show `src/core/guard.ts`, the `beforeTool` callback. Returning a record makes ADK skip the tool. | The guarantee lives outside the model, because it cannot live inside one. |
 | 5:40 | Name `src/model/chrome-prompt-llm.ts`. | Chrome returns strings; ADK needs function calls; the adapter builds them from constrained decoding. Upstream as #843. |
 
@@ -92,8 +102,11 @@ there is no baseline and no cost claim to make.
   never leaves is model traffic, because there is no model server.
 - **A cost saving.** No token meter, no baseline, no number.
 - **That the model is Gemma.** Chrome's docs say Gemini Nano. Use that.
-- **That prompt injection is solved.** It is not, and Chrome's own guidance says
-  so. What is solved is that a fooled model still cannot spend money.
+- **That prompt injection is solved.** It is not, and Chrome's own guidance
+  says so. What is solved is that a fooled model still cannot spend money.
+- **That you have demonstrated the injection.** You have not; it is not in the
+  run. You are describing a risk the platform already flags, and showing the
+  gate that answers it.
 - **That simulated output is model output.** Ever.
 
 ---
