@@ -17,7 +17,7 @@ import { Panel } from '../ui/panel.js';
 import {
   CARE_PLAN,
   localBridge,
-  POISONED_PRODUCT,
+  GLOVE_LINER,
   registerWithBrowser,
   RidgelineStore,
 } from './store.js';
@@ -43,7 +43,9 @@ const price = (value: number) =>
 function renderStore(): void {
   grid.innerHTML = '';
   for (const product of store.products) {
-    const poisoned = product.handle === POISONED_PRODUCT.handle;
+    // Flagged only while the title actually carries the attack.
+    const poisoned =
+      product.handle === GLOVE_LINER.handle && store.injectionEnabled;
     const card = document.createElement('article');
     card.className = `hs-card${poisoned ? ' is-flagged' : ''}`;
     // A product card carries a picture, a name and a price. The spec copy

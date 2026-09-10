@@ -132,6 +132,14 @@ async function main() {
     names.join(),
   );
   check('the lookup runs first', !!cartOnly.equipped[0]?.readOnlyHint, names.join());
+  // The word "cart" in the request matches get_cart's own NAME, so ranking by
+  // lexical score alone picked the tool that reads the cart — which cannot
+  // resolve a product. The lookup has to be something that takes a query.
+  check(
+    'the lookup is a search tool, not get_cart',
+    names.includes('search_catalog') && !names.includes('get_cart'),
+    names.join(),
+  );
 
   const readOnly = await narrowTools({
     query: 'what is in my cart',

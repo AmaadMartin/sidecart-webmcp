@@ -144,6 +144,21 @@ function safeDefault(tools: WebMcpTool[], limit: number): WebMcpTool[] {
 }
 
 /**
+ * True when a tool takes a free-text query, which is what a lookup looks like.
+ *
+ * Picking the lookup by lexical score alone does not work: asked to "add the
+ * glove liner to my cart", the word `cart` matches `get_cart`'s own name, so
+ * the reader tool that wins is the one that reads the cart — which cannot
+ * resolve a product. A tool that resolves something takes words to resolve.
+ */
+function takesFreeText(tool: WebMcpTool): boolean {
+  const schema = JSON.stringify(parseInputSchema(tool.descriptor)).toLowerCase();
+  return /"(query|search|q|term|keywords)"\s*:\s*\{[^}]*"type"\s*:\s*"string"/.test(
+    schema,
+  );
+}
+
+/**
  * Gives a write tool something to look things up with.
  *
  * A tool that changes state almost always needs a read first: you cannot add a
@@ -167,9 +182,12 @@ function withLookup(
   if (chosen.some((tool) => tool.readOnlyHint)) return chosen;
 
   const names = new Set(chosen.map((tool) => tool.name));
-  const lookup = lexicalRank(query, all)
+  const candidates = lexicalRank(query, all)
     .map((row) => row.tool)
-    .find((tool) => tool.readOnlyHint && !names.has(tool.name));
+    .filter((tool) => tool.readOnlyHint && !names.has(tool.name));
+
+  // A search tool first; any reader only as a fallback.
+  const lookup = candidates.find(takesFreeText) ?? candidates[0];
   // The lookup runs first, so the write has something to work from.
   return lookup ? [lookup, ...chosen] : chosen;
 }
