@@ -40,10 +40,22 @@ export interface CreateModelOptions {
 }
 
 /** Probes the browser for a usable built-in model. */
+/** Languages declared on every call, so Chrome does not warn. */
+const LANGUAGES: {
+  expectedInputs: LanguageModelExpected[];
+  expectedOutputs: LanguageModelExpected[];
+} = {
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+};
+
 export async function probeAvailability(): Promise<Availability | 'missing-api'> {
   if (typeof (globalThis as any).LanguageModel === 'undefined') return 'missing-api';
   try {
-    return await LanguageModel.availability();
+    // The languages go here too, not only on create(). Chrome warns on any
+    // LanguageModel call that omits them, and this probe runs at startup, so
+    // leaving it bare printed a warning into the console of every demo.
+    return await LanguageModel.availability(LANGUAGES);
   } catch {
     return 'unavailable';
   }
@@ -96,12 +108,9 @@ export async function createModel(
         onDownloadProgress: options.onDownloadProgress,
         temperature: options.temperature,
         topK: options.topK,
-        // Chrome warns if these are omitted: "No output language was specified
-        // in a LanguageModel API request. An output language should be specified
-        // to ensure optimal output quality and properly attest to output
-        // safety." Supported set is [de, en, es, fr, ja].
-        expectedInputs: [{ type: 'text', languages: ['en'] }],
-        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        // Chrome warns on any call that omits these. Supported set is
+        // [de, en, es, fr, ja].
+        ...LANGUAGES,
       }),
       status: {
         kind: 'on-device',
