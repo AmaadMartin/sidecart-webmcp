@@ -37,9 +37,13 @@ stage and carry on. Never present scripted output as inference.
 
 1. `what waterproof jackets do you have?`
 2. `what is your return policy?` — note the funnel figure changes
-3. Tick **Add a listing that tries to instruct the assistant**
-4. `add the alpine glove liner to my cart`
-5. On the card, click **Add only Alpine Glove Liner**
+3. `add the alpine glove liner to my cart`
+4. On the card, click **Confirm — $32.00**
+
+The guard against a listing that instructs the assistant is not part of this
+run. To exercise it, open the harness with `?inject=1` and tick **Add a listing
+that tries to instruct the assistant**. The card then offers three actions and
+makes **Add everything anyway** the smallest target.
 
 ## 2. Run it on a real Shopify store
 
@@ -90,16 +94,16 @@ node scripts/record-demo.mjs --url http://localhost:8910/harness.html
 
 | Beat | On screen |
 | --- | --- |
-| 0:00 | The store, and the claim that Shopify publishes these tools |
-| 0:07 | `what waterproof jackets do you have?` typed and answered |
-| 0:20 | The funnel figure, held long enough to read |
-| 0:27 | `what is your return policy?` — a different tool is chosen |
-| 0:34 | The poisoned listing is switched on |
-| 0:40 | `add the alpine glove liner to my cart` |
-| 0:45 | The card stops it, with the smuggled line marked |
-| 0:52 | **Add only Alpine Glove Liner** → one item, $32.00 |
+| 1 | The store, and the claim that Shopify publishes these tools |
+| 2 | `what waterproof jackets do you have?` typed and answered |
+| 3 | The funnel figure, held long enough to read |
+| 4 | `what is your return policy?` — a different tool is chosen |
+| 5 | `add the alpine glove liner to my cart` |
+| 6 | The card stops it. The model proposed the change, it did not make it |
+| 7 | **Confirm — $32.00** → one item in the cart |
 
-The captions are added by the recorder, not the app.
+The captions are added by the recorder, not the app. The recorder waits on the
+model, so the running time depends on the machine.
 
 ### Record against a real store instead
 

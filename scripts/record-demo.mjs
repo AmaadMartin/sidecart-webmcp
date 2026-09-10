@@ -281,7 +281,7 @@ async function runScript(page) {
 
   // 5. The person decides ------------------------------------------------
   const before = await run(() => window.sidecart.cart());
-  await run(() => window.sidecart.choose('Confirm'));
+  await run(() => window.sidecart.decide('all'));
   const changed = await run((t) => window.sidecart.cartChanged(t), before.total);
   if (changed === null) throw new Error('The cart never changed after approval.');
   await sleep(1600);

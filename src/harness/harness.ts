@@ -260,6 +260,14 @@ async function main(): Promise<void> {
       if (!match) throw new Error(`No approval button matching "${label}".`);
       match.click();
     },
+    /** Clicks a confirmation button by its decision, whatever it is labelled. */
+    decide(decision: string) {
+      const match = document.querySelector<HTMLButtonElement>(
+        `.sc-approval [data-decision="${decision}"]`,
+      );
+      if (!match) throw new Error(`No approval button for "${decision}".`);
+      match.click();
+    },
     setInjection(on: boolean) {
       store.setInjection(on);
       renderStore();

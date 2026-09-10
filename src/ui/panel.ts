@@ -412,8 +412,9 @@ export class Panel {
       })
       .join('');
 
-    // One action is right, one is safe, one is dangerous. They should not
-    // look alike, and the dangerous one should not be the biggest target.
+    // A plain change gets one primary action and a quiet way out. When the
+    // guard fires, one action is right, one is safe and one is dangerous: they
+    // must not look alike, and the dangerous one is never the biggest target.
     const canSplit = alarming && wanted.length > 0;
     card.innerHTML = `
       <p class="sc-approval-title">${
@@ -438,21 +439,24 @@ export class Panel {
       <p class="sc-approval-tool">Runs <code>${escape(request.tool)}</code></p>
       <div class="sc-approval-actions">
         ${
-          canSplit
-            ? `<button type="button" class="sc-btn is-primary" data-decision="only-asked">
-                 Add only ${escape(cleanName(wanted[0]!.title ?? wanted[0]!.ref, 28))}
-               </button>`
-            : ''
-        }
-        <button type="button" class="sc-btn${canSplit ? '' : ' is-primary'}"
-                data-decision="none">Add nothing</button>
-        <button type="button" class="sc-link" data-decision="all">${
           alarming
-            ? 'Add everything anyway'
-            : typeof request.total === 'number'
-              ? `Confirm — ${escape(money(request.total))}`
-              : 'Confirm'
-        }</button>
+            ? `${
+                canSplit
+                  ? `<button type="button" class="sc-btn is-primary" data-decision="only-asked">
+                       Add only ${escape(cleanName(wanted[0]!.title ?? wanted[0]!.ref, 28))}
+                     </button>`
+                  : ''
+              }
+               <button type="button" class="sc-btn${canSplit ? '' : ' is-primary'}"
+                       data-decision="none">Add nothing</button>
+               <button type="button" class="sc-link" data-decision="all">Add everything anyway</button>`
+            : `<button type="button" class="sc-btn is-primary" data-decision="all">${
+                 typeof request.total === 'number'
+                   ? `Confirm — ${escape(money(request.total))}`
+                   : 'Confirm'
+               }</button>
+               <button type="button" class="sc-link" data-decision="none">Cancel</button>`
+        }
       </div>
     `;
 
