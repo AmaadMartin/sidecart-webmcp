@@ -9,6 +9,11 @@
  */
 
 import { ShoppingAssistant } from '../src/core/agent.js';
+import {
+  compactSchema,
+  renderToolInstructions,
+} from '../src/model/chrome-prompt-llm.js';
+import { parseInputSchema, WebMcpCatalog } from '../src/core/webmcp.js';
 import { localBridge, RidgelineStore } from '../src/harness/store.js';
 import { ChromePromptApiLlm } from '../src/model/chrome-prompt-llm.js';
 import {
@@ -54,6 +59,49 @@ function build(options: {
 
 async function main() {
   configureFake({ latencyMs: 0 });
+
+  console.log('\nwhat the model is told about the tools');
+  {
+    const catalog = new WebMcpCatalog(localBridge(new RidgelineStore()));
+    const all = await catalog.tools();
+    const pair = all.filter((t) =>
+      ['search_catalog', 'update_cart'].includes(t.name),
+    );
+    const text = renderToolInstructions(pair.map((t) => t._getDeclaration()));
+
+    // The failure this guards against: reducing the schema to a list of key
+    // names. Told only "args keys: cart", a model cannot know that cart holds
+    // line_items, an array of objects, and answers with a flat object.
+    check(
+      'the nesting is spelled out, not just the top-level key',
+      text.includes('line_items') && text.includes('"type":"array"'),
+    );
+    check('the handle field is visible', text.includes('handle'));
+    check(
+      'the prose is gone from the schemas',
+      !text.includes('Batch EVERY change') && !text.includes('Storefront API'),
+    );
+
+    const full = pair.reduce(
+      (n, t) => n + JSON.stringify(parseInputSchema(t.descriptor)).length,
+      0,
+    );
+    const compact = pair.reduce(
+      (n, t) =>
+        n + JSON.stringify(compactSchema(parseInputSchema(t.descriptor))).length,
+      0,
+    );
+    check(
+      'stripping prose roughly halves the schema',
+      compact < full * 0.6,
+      `${compact} of ${full}`,
+    );
+    check(
+      'the whole instruction stays under 1.5k characters',
+      text.length < 1500,
+      String(text.length),
+    );
+  }
 
   console.log('\na plain question');
   {

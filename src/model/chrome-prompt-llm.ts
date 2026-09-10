@@ -192,39 +192,55 @@ export function buildToolChoiceSchema(
 }
 
 /** Renders tool declarations into instructions the model can act on. */
+/**
+ * Strips the prose out of a JSON Schema, keeping the structure.
+ *
+ * Shopify's schemas are mostly description text: `update_cart` is 1,158
+ * characters, of which about 800 are sentences explaining each field to a
+ * large agent. The shape underneath is 358 characters, and the shape is the
+ * part a model needs in order to answer with the right nesting.
+ */
+export function compactSchema(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(compactSchema);
+  if (!node || typeof node !== 'object') return node;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    if (key === 'description' || key === 'title' || key === 'default') continue;
+    if (key === 'examples' || key === 'additionalProperties') continue;
+    out[key] = compactSchema(value);
+  }
+  return out;
+}
+
 export function renderToolInstructions(decls: FunctionDeclaration[]): string {
   if (!decls.length) return '';
 
-  // The full JSON Schema is NOT repeated here. It already goes to the model as
-  // `responseConstraint`, which forces the shape rather than asking for it, so
-  // a second copy in the prompt buys nothing and costs a great deal: for one
-  // catalogue lookup plus one cart write it was about 1,500 characters of
-  // duplicated text, decoded on every call, on a model whose context is the
-  // scarce resource this whole app is built around.
-  //
-  // What the prompt still needs is what the constraint cannot express: which
-  // tool to reach for, and the names of the top-level keys, because a model
-  // reading a deep schema will otherwise answer with a flat object.
+  // The schema is shown with its prose removed rather than in full or not at
+  // all. In full it duplicated the responseConstraint and cost about 1,500
+  // characters a call. Reduced to a list of key names it stopped saying
+  // anything useful — a model told only `args keys: cart` cannot know that
+  // `cart` holds `line_items`, an array of objects, and answers with a flat
+  // object or a bare string. The stripped shape is the smallest thing that
+  // still describes the nesting.
   const lines = decls.map((d) => {
     const args = d.parametersJsonSchema
       ? (d.parametersJsonSchema as Record<string, unknown>)
       : genaiSchemaToJsonSchema(d.parameters);
-    const required = Array.isArray((args as { required?: unknown }).required)
-      ? (args as { required: string[] }).required
-      : Object.keys((args as { properties?: object }).properties ?? {});
-    const shape = required.length
-      ? ` args keys: ${required.join(', ')}.`
-      : '';
-    return `- ${d.name}: ${firstLine(d.description ?? '')}${shape}`;
+    return [
+      `- ${d.name}: ${firstLine(d.description ?? '')}`,
+      `  args shape: ${JSON.stringify(compactSchema(args))}`,
+    ].join('\n');
   });
 
   return [
     'You can call these tools:',
     ...lines,
     '',
-    'Reply with JSON only. To call a tool use {"kind":"tool","name":<tool>,"args":{...}}.',
-    'Nest the args exactly as the tool requires. Do not flatten or rename keys.',
-    'When you have the answer use {"kind":"final","text":<answer>}.',
+    'Reply with JSON only.',
+    'To call a tool: {"kind":"tool","name":<tool>,"args":{...}}',
+    'The args must match that tool\'s shape exactly. Keep every level of',
+    'nesting. Do not flatten it, do not rename a key, do not add keys.',
+    'When you have the answer: {"kind":"final","text":<answer>}',
   ].join('\n');
 }
 
@@ -237,6 +253,7 @@ function firstLine(text: string, limit = 160): string {
     ? sentence
     : `${sentence.slice(0, limit - 1).trimEnd()}…`;
 }
+
 
 
 /* ------------------------------------------------------------------ *
