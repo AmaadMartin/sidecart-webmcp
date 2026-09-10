@@ -157,6 +157,18 @@ function collectFunctionDeclarations(llmRequest: LlmRequest): FunctionDeclaratio
  *
  * Single-value `enum` is used rather than `const`; it is semantically identical
  * and more widely supported across constraint engines.
+ *
+ * Every branch sets `additionalProperties: false`, and that is load-bearing
+ * rather than tidy. Omitted, JSON Schema permits extra keys, so a decoder is
+ * free to emit `,"…` after the last required key instead of `}`. The object
+ * then never has to close: the model keeps writing until the output runs out
+ * and the reply arrives as truncated JSON. Closing the branch makes `}` the
+ * only legal token once `text` is written.
+ *
+ * It is set on the envelope only, never pushed down into a tool's own `args`
+ * schema. Those schemas belong to the page. Some describe objects that
+ * legitimately take keys they do not list, and forbidding those here would
+ * make a valid call impossible to express.
  */
 export function buildToolChoiceSchema(
   decls: FunctionDeclaration[],
@@ -169,6 +181,7 @@ export function buildToolChoiceSchema(
         text: { type: 'string' },
       },
       required: ['kind', 'text'],
+      additionalProperties: false,
     },
   ];
 
@@ -185,6 +198,7 @@ export function buildToolChoiceSchema(
         args,
       },
       required: ['kind', 'name', 'args'],
+      additionalProperties: false,
     });
   }
 
@@ -241,7 +255,137 @@ export function renderToolInstructions(decls: FunctionDeclaration[]): string {
     'The args must match that tool\'s shape exactly. Keep every level of',
     'nesting. Do not flatten it, do not rename a key, do not add keys.',
     'When you have the answer: {"kind":"final","text":<answer>}',
+    'Send the keys shown and no others. Write the closing brace and stop.',
   ].join('\n');
+}
+
+/** Shown when a reply is JSON, is broken, and holds no readable answer. */
+const CUT_OFF = 'The model started an answer and did not finish it. Ask again.';
+
+/**
+ * Reads the answer out of a truncated `{"kind":"final","text":"…` envelope.
+ *
+ * A constrained reply that stops early is usually still readable: the answer
+ * sits in `text` and only the closing quote and brace are missing. Scanning it
+ * out by hand beats `JSON.parse`, which needs the whole document, and beats
+ * showing the envelope to the shopper.
+ *
+ * Returns undefined when there is no `text` key to read.
+ */
+export function salvageFinalText(raw: string): string | undefined {
+  const key = raw.match(/"text"\s*:\s*"/);
+  if (!key?.index && key?.index !== 0) return undefined;
+
+  const escapes: Record<string, string> = {
+    n: '\n',
+    t: '\t',
+    r: '\r',
+    b: '\b',
+    f: '\f',
+    '"': '"',
+    '\\': '\\',
+    '/': '/',
+  };
+
+  let out = '';
+  for (let i = key.index + key[0].length; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (ch === '"') break; // the string closed normally
+    if (ch !== '\\') {
+      out += ch;
+      continue;
+    }
+    const next = raw[i + 1];
+    if (next === undefined) break; // truncated mid-escape
+    if (next === 'u') {
+      const hex = raw.slice(i + 2, i + 6);
+      if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+        out += String.fromCharCode(parseInt(hex, 16));
+        i += 5;
+        continue;
+      }
+    }
+    out += escapes[next] ?? next;
+    i++;
+  }
+
+  const text = out.trim();
+  return text.length ? text : undefined;
+}
+
+/**
+ * Turns a constrained JSON reply into an ADK response.
+ *
+ * Exported as a plain function so the reply shapes a real model actually
+ * produces — truncated, fenced, wrapped in prose — can be tested without a
+ * browser or a model.
+ */
+export function parseToolChoice(
+  raw: string,
+  decls: FunctionDeclaration[],
+  diag?: (d: ChromeLlmDiagnostic) => void,
+): LlmResponse {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    // The constraint should make this impossible, but small models sometimes
+    // wrap output in prose or fences. Salvage the first JSON object.
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (m) {
+      try {
+        parsed = JSON.parse(m[0]);
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    // A truncated reply has no closing brace, so the salvage above cannot match
+    // it. The answer is usually still in there.
+    const salvaged = salvageFinalText(raw);
+    if (salvaged) {
+      diag?.({ phase: 'parse-retry', note: 'truncated envelope; recovered the text' });
+      return finalText(salvaged);
+    }
+    diag?.({ phase: 'parse-retry', note: 'unparseable JSON; treated as text' });
+    // Prose that was never JSON is the useful fallback. A broken envelope is
+    // not: showing it puts punctuation and key names in front of the shopper.
+    return finalText(looksLikeEnvelope(raw) ? CUT_OFF : raw);
+  }
+
+  if (parsed.kind === 'tool' && parsed.name) {
+    const known = decls.some((d) => d.name === parsed.name);
+    if (!known) {
+      return finalText(`The model requested an unknown tool "${parsed.name}".`);
+    }
+    return {
+      content: {
+        role: 'model',
+        parts: [
+          {
+            functionCall: {
+              id: `chrome-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              name: parsed.name,
+              args: parsed.args ?? {},
+            },
+          },
+        ],
+      },
+      turnComplete: true,
+    };
+  }
+
+  if (typeof parsed.text === 'string') return finalText(parsed.text);
+  if (parsed.text !== undefined) return finalText(String(parsed.text));
+  diag?.({ phase: 'parse-retry', note: 'envelope carried no text' });
+  return finalText(looksLikeEnvelope(raw) ? CUT_OFF : raw);
+}
+
+/** True when a reply is the JSON envelope rather than plain prose. */
+function looksLikeEnvelope(raw: string): boolean {
+  return /^\s*[[{]/.test(raw) || /"kind"\s*:/.test(raw);
 }
 
 /** The first sentence of a description, bounded. */
@@ -592,7 +736,7 @@ export class ChromePromptApiLlm extends BaseLlm {
       const raw = await this.promptOnce(session, messages, responseConstraint, abortSignal);
 
       if (useConstrainedTools) {
-        yield this.parseToolChoice(raw, decls);
+        yield parseToolChoice(raw, decls, (d) => this.diag(d));
       } else {
         yield finalText(raw);
       }
@@ -648,56 +792,6 @@ export class ChromePromptApiLlm extends BaseLlm {
       reader.releaseLock();
     }
     yield { content: { role: 'model', parts: [{ text: acc }] }, turnComplete: true };
-  }
-
-  /** Turns the constrained JSON reply into an ADK response. */
-  private parseToolChoice(raw: string, decls: FunctionDeclaration[]): LlmResponse {
-    let parsed: any;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      // The constraint should make this impossible, but small models sometimes
-      // wrap output in prose or fences. Salvage the first JSON object.
-      const m = raw.match(/\{[\s\S]*\}/);
-      if (m) {
-        try {
-          parsed = JSON.parse(m[0]);
-        } catch {
-          /* fall through */
-        }
-      }
-    }
-
-    if (!parsed || typeof parsed !== 'object') {
-      this.diag({ phase: 'parse-retry', note: 'unparseable JSON; treated as text' });
-      return finalText(raw);
-    }
-
-    if (parsed.kind === 'tool' && parsed.name) {
-      const known = decls.some((d) => d.name === parsed.name);
-      if (!known) {
-        return finalText(
-          `The model requested an unknown tool "${parsed.name}".`,
-        );
-      }
-      return {
-        content: {
-          role: 'model',
-          parts: [
-            {
-              functionCall: {
-                id: `chrome-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                name: parsed.name,
-                args: parsed.args ?? {},
-              },
-            },
-          ],
-        },
-        turnComplete: true,
-      };
-    }
-
-    return finalText(typeof parsed.text === 'string' ? parsed.text : raw);
   }
 
   /**

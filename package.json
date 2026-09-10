@@ -22,7 +22,7 @@
     "dev": "node build.mjs --watch",
     "serve": "node build.mjs --dev && node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node run-tests.mjs tests/webmcp.test.ts && node run-tests.mjs tests/narrow.test.ts && node run-tests.mjs tests/guard.test.ts && node run-tests.mjs tests/agent.test.ts",
+    "test": "node run-tests.mjs tests/webmcp.test.ts && node run-tests.mjs tests/narrow.test.ts && node run-tests.mjs tests/guard.test.ts && node run-tests.mjs tests/envelope.test.ts && node run-tests.mjs tests/agent.test.ts",
     "check": "npm run typecheck && npm run build && npm test",
     "record": "node build.mjs && node scripts/record-demo.mjs --out demo.mp4",
     "doctor": "node scripts/doctor.mjs",
