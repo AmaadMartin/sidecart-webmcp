@@ -198,13 +198,25 @@ export function renderToolInstructions(decls: FunctionDeclaration[]): string {
     const args = d.parametersJsonSchema
       ? (d.parametersJsonSchema as Record<string, unknown>)
       : genaiSchemaToJsonSchema(d.parameters);
-    return `- ${d.name}: ${d.description ?? ''}\n  arguments: ${JSON.stringify(args)}`;
+    const required = Array.isArray((args as {required?: unknown}).required)
+      ? ((args as {required: string[]}).required)
+      : [];
+    // Naming the top-level keys separately matters. A real on-device model
+    // reads a deep schema and still answers with a flat object — inventing
+    // `{handle, quantity}` where the tool wants `{cart: {line_items: [...]}}`.
+    // The tool then sees no arguments it recognises and quietly does nothing.
+    const shape = required.length
+      ? `\n  args MUST be an object whose top-level keys are exactly: ${required.join(', ')}`
+      : '';
+    return `- ${d.name}: ${d.description ?? ''}\n  schema: ${JSON.stringify(args)}${shape}`;
   });
   return [
     'You can call these tools:',
     ...lines,
     '',
     'Reply with JSON only. To call a tool use {"kind":"tool","name":<tool>,"args":{...}}.',
+    'The args object must match that tool\'s schema exactly. Do not flatten',
+    'nested objects, do not invent keys, and do not rename them.',
     'When you have the answer use {"kind":"final","text":<answer>}.',
   ].join('\n');
 }

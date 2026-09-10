@@ -115,6 +115,35 @@ async function main() {
     (await narrowTools({ query: 'zzzz qqqq', tools })).equipped.length === 3,
   );
 
+  console.log('\na write tool gets something to look things up with');
+  // A real model asked to "add X to my cart" picks update_cart alone, then has
+  // to invent an identifier. The scripted stand-in paired the two by hand, so
+  // this only showed up once a real model drove it.
+  const cartOnly = await narrowTools({
+    query: 'add the alpine glove liner to my cart',
+    tools,
+    select: async () => ['update_cart'],
+  });
+  const names = cartOnly.equipped.map((t) => t.name);
+  check('update_cart is still equipped', names.includes('update_cart'));
+  check(
+    'a read-only tool was added alongside it',
+    cartOnly.equipped.some((t) => t.readOnlyHint),
+    names.join(),
+  );
+  check('the lookup runs first', !!cartOnly.equipped[0]?.readOnlyHint, names.join());
+
+  const readOnly = await narrowTools({
+    query: 'what is in my cart',
+    tools,
+    select: async () => ['get_cart'],
+  });
+  check(
+    'a read-only selection is left alone',
+    readOnly.equipped.map((t) => t.name).join() === 'get_cart',
+    readOnly.equipped.map((t) => t.name).join(),
+  );
+
   console.log('\nthe point of the exercise');
   const narrowed = await narrowTools({
     query: 'what is in my cart',

@@ -143,6 +143,37 @@ function safeDefault(tools: WebMcpTool[], limit: number): WebMcpTool[] {
   return [...readOnly, ...tools.filter((t) => !t.readOnlyHint)].slice(0, limit);
 }
 
+/**
+ * Gives a write tool something to look things up with.
+ *
+ * A tool that changes state almost always needs a read first: you cannot add a
+ * product to a cart until you know which product the shopper meant. Asked to
+ * "add the alpine glove liner to my cart", a model reasonably picks only
+ * `update_cart` — and then has to invent an identifier, because nothing has
+ * told it what the store calls that thing.
+ *
+ * So when the selection is all writes, the best-matching read-only tool is
+ * added alongside. This is a general rule rather than a Shopify one: it keys
+ * off the page's own `readOnlyHint`, and does nothing on a page whose tools
+ * are all reads.
+ */
+function withLookup(
+  chosen: WebMcpTool[],
+  query: string,
+  all: WebMcpTool[],
+  limit: number,
+): WebMcpTool[] {
+  if (!chosen.length || chosen.length >= limit) return chosen;
+  if (chosen.some((tool) => tool.readOnlyHint)) return chosen;
+
+  const names = new Set(chosen.map((tool) => tool.name));
+  const lookup = lexicalRank(query, all)
+    .map((row) => row.tool)
+    .find((tool) => tool.readOnlyHint && !names.has(tool.name));
+  // The lookup runs first, so the write has something to work from.
+  return lookup ? [lookup, ...chosen] : chosen;
+}
+
 /** Chooses tool names from a menu. Returns names, not tools. */
 export type ToolSelector = (
   query: string,
@@ -194,7 +225,10 @@ export async function narrowTools(params: {
         .map((name) => byName.get(name))
         .filter((tool): tool is WebMcpTool => !!tool)
         .slice(0, limit);
-      if (equipped.length) method = 'model';
+      if (equipped.length) {
+        equipped = withLookup(equipped, query, tools, limit);
+        method = 'model';
+      }
     } catch {
       equipped = [];
     }
