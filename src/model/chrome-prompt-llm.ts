@@ -194,32 +194,50 @@ export function buildToolChoiceSchema(
 /** Renders tool declarations into instructions the model can act on. */
 export function renderToolInstructions(decls: FunctionDeclaration[]): string {
   if (!decls.length) return '';
+
+  // The full JSON Schema is NOT repeated here. It already goes to the model as
+  // `responseConstraint`, which forces the shape rather than asking for it, so
+  // a second copy in the prompt buys nothing and costs a great deal: for one
+  // catalogue lookup plus one cart write it was about 1,500 characters of
+  // duplicated text, decoded on every call, on a model whose context is the
+  // scarce resource this whole app is built around.
+  //
+  // What the prompt still needs is what the constraint cannot express: which
+  // tool to reach for, and the names of the top-level keys, because a model
+  // reading a deep schema will otherwise answer with a flat object.
   const lines = decls.map((d) => {
     const args = d.parametersJsonSchema
       ? (d.parametersJsonSchema as Record<string, unknown>)
       : genaiSchemaToJsonSchema(d.parameters);
-    const required = Array.isArray((args as {required?: unknown}).required)
-      ? ((args as {required: string[]}).required)
-      : [];
-    // Naming the top-level keys separately matters. A real on-device model
-    // reads a deep schema and still answers with a flat object — inventing
-    // `{handle, quantity}` where the tool wants `{cart: {line_items: [...]}}`.
-    // The tool then sees no arguments it recognises and quietly does nothing.
+    const required = Array.isArray((args as { required?: unknown }).required)
+      ? (args as { required: string[] }).required
+      : Object.keys((args as { properties?: object }).properties ?? {});
     const shape = required.length
-      ? `\n  args MUST be an object whose top-level keys are exactly: ${required.join(', ')}`
+      ? ` args keys: ${required.join(', ')}.`
       : '';
-    return `- ${d.name}: ${d.description ?? ''}\n  schema: ${JSON.stringify(args)}${shape}`;
+    return `- ${d.name}: ${firstLine(d.description ?? '')}${shape}`;
   });
+
   return [
     'You can call these tools:',
     ...lines,
     '',
     'Reply with JSON only. To call a tool use {"kind":"tool","name":<tool>,"args":{...}}.',
-    'The args object must match that tool\'s schema exactly. Do not flatten',
-    'nested objects, do not invent keys, and do not rename them.',
+    'Nest the args exactly as the tool requires. Do not flatten or rename keys.',
     'When you have the answer use {"kind":"final","text":<answer>}.',
   ].join('\n');
 }
+
+/** The first sentence of a description, bounded. */
+function firstLine(text: string, limit = 160): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  const stop = clean.search(/[.!?](\s|$)/);
+  const sentence = stop > 0 ? clean.slice(0, stop + 1) : clean;
+  return sentence.length <= limit
+    ? sentence
+    : `${sentence.slice(0, limit - 1).trimEnd()}…`;
+}
+
 
 /* ------------------------------------------------------------------ *
  * Content mapping

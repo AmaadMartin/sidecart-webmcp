@@ -131,6 +131,8 @@ export interface TurnResult {
 export interface AssistantOptions {
   bridge: WebMcpBridge;
   model: ChromePromptApiLlm;
+  /** Per-turn budget. Defaults to three minutes. */
+  turnTimeoutMs?: number;
   approve?: ApprovalPrompt;
   onUpdate?: (update: TurnUpdate) => void;
 }
@@ -275,12 +277,24 @@ export class ShoppingAssistant {
     });
 
     emit({ type: 'status', text: 'Thinking on device…' });
+
+    // A turn is several inference calls and each one can be slow, but it
+    // should never run without end. Without a deadline a stalled call leaves
+    // the panel saying "thinking" for as long as the page is open, which is
+    // indistinguishable from a crash.
+    const deadline = AbortSignal.timeout(this.options.turnTimeoutMs ?? 180000);
     let text = '';
     for await (const event of runner.runAsync({
       userId: USER_ID,
       sessionId: session.id,
       newMessage: { role: 'user', parts: [{ text: query }] },
     }) as AsyncGenerator<Event>) {
+      if (deadline.aborted) {
+        text =
+          'That took too long and I stopped. The model on this device may ' +
+          'still be warming up — ask again.';
+        break;
+      }
       // A model may split one answer across several text parts. Keeping only
       // the last part silently truncated the reply to its final fragment, so
       // the parts of an event are joined. A later event supersedes an earlier

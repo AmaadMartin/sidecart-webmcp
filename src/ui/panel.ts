@@ -42,6 +42,7 @@ export class Panel {
   private busy = false;
   private assistant?: ShoppingAssistant;
   private surface?: HTMLElement;
+  private clock?: number;
 
   constructor(private readonly options: PanelOptions) {
     this.render();
@@ -204,6 +205,7 @@ export class Panel {
         }`,
       );
     } finally {
+      this.stopClock();
       this.busy = false;
       this.send.disabled = false;
       this.input.focus();
@@ -218,7 +220,7 @@ export class Panel {
 
     switch (update.type) {
       case 'status':
-        host.querySelector('.sc-text')!.textContent = update.text;
+        this.startClock(update.text);
         break;
 
       case 'funnel': {
@@ -297,6 +299,7 @@ export class Panel {
       }
 
       case 'text':
+        this.stopClock();
         this.setText(update.text);
         break;
     }
@@ -338,6 +341,32 @@ export class Panel {
       );
       row.append(pre);
     });
+  }
+
+  /**
+   * Keeps a running clock on the status line.
+   *
+   * On real hardware one turn is several inference calls and can take tens of
+   * seconds. A static "Thinking on device…" is indistinguishable from a hang,
+   * and the honest fix is to show that time is passing rather than to pretend
+   * it is fast.
+   */
+  private startClock(label: string): void {
+    this.stopClock();
+    const began = Date.now();
+    const tick = () => {
+      const seconds = Math.round((Date.now() - began) / 1000);
+      this.setText(seconds < 2 ? label : `${label} ${seconds}s`);
+    };
+    tick();
+    this.clock = window.setInterval(tick, 1000);
+  }
+
+  private stopClock(): void {
+    if (this.clock !== undefined) {
+      window.clearInterval(this.clock);
+      this.clock = undefined;
+    }
   }
 
   private setText(text: string): void {
@@ -427,6 +456,7 @@ export class Panel {
       </div>
     `;
 
+    this.stopClock();
     this.setText(
       alarming
         ? 'Stopped. Check this before it runs.'
