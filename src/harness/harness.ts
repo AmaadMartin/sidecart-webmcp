@@ -181,16 +181,53 @@ async function main(): Promise<void> {
     submit() {
       document.querySelector<HTMLFormElement>('.sc-composer')!.requestSubmit();
     },
-    /** Resolves once the assistant has finished, or a card is waiting. */
-    async settled(timeoutMs = 25000) {
+    /**
+     * Resolves once the assistant has finished, or a card is waiting.
+     *
+     * Two things here matter on a machine with a real model, and neither did
+     * against the scripted stand-in.
+     *
+     * It waits for the turn to *start* before waiting for it to end.
+     * `submit()` disables the send button asynchronously, so polling straight
+     * after it could see a still-enabled button and report 'done' before a
+     * single token had been generated.
+     *
+     * And the budget is generous. One turn can be three inference calls — the
+     * tool selection, the tool-calling turn and the reply — and a cold session
+     * on real hardware takes seconds per call, not milliseconds.
+     */
+    async settled(timeoutMs = 180000) {
+      const began = Date.now();
+      const idle = () => {
+        const button = document.querySelector<HTMLButtonElement>('.sc-send');
+        return !!button && !button.disabled;
+      };
+      // Phase one: wait for it to pick the turn up, briefly.
+      while (Date.now() - began < 3000 && idle()) {
+        if (document.querySelector('.sc-approval')) break;
+        await new Promise((r) => setTimeout(r, 40));
+      }
+      // Phase two: wait for it to put the turn down.
       const started = Date.now();
       while (Date.now() - started < timeoutMs) {
-        if (document.querySelector('.sc-approval')) return 'approval';
-        const button = document.querySelector<HTMLButtonElement>('.sc-send');
-        if (button && !button.disabled) return 'done';
+        if (document.querySelector('.sc-approval')) {
+          return { state: 'approval', ms: Date.now() - started };
+        }
+        if (idle()) return { state: 'done', ms: Date.now() - started };
         await new Promise((r) => setTimeout(r, 120));
       }
-      return 'timeout';
+      return { state: 'timeout', ms: Date.now() - started };
+    },
+
+    /** Resolves once the cart total changes, or the budget runs out. */
+    async cartChanged(from: string, timeoutMs = 60000) {
+      const started = Date.now();
+      while (Date.now() - started < timeoutMs) {
+        const now = document.getElementById('cart-total')?.textContent ?? '';
+        if (now !== from) return now;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      return null;
     },
     approval() {
       const card = document.querySelector('.sc-approval');

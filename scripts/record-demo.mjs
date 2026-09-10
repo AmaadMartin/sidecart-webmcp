@@ -208,11 +208,28 @@ async function runScript(page) {
   const hide = () =>
     run(() => document.getElementById('rec-cap').classList.remove('on'));
 
+  /**
+   * Types a question, sends it, and waits for the turn however long it takes.
+   *
+   * A real on-device model answers in seconds, not milliseconds, and a turn
+   * that needs two tools runs three inference calls. Waiting on a fixed sleep
+   * would capture a half-finished panel, so this waits on state and fails
+   * loudly rather than recording a broken take.
+   */
   const ask = async (question, pause = 900) => {
     await run((q) => window.sidecart.type(q), question);
     await sleep(pause);
     await run(() => window.sidecart.submit());
-    return run(() => window.sidecart.settled());
+    const result = await run(() => window.sidecart.settled());
+    if (result.state === 'timeout') {
+      throw new Error(
+        `The assistant did not finish "${question}" within ` +
+          `${Math.round(result.ms / 1000)}s. If the model is real and the ` +
+          'machine is slow, raise the budget in window.sidecart.settled.',
+      );
+    }
+    console.log(`  "${question}" -> ${result.state} in ${result.ms} ms`);
+    return result.state;
   };
 
   // 1. The premise ----------------------------------------------------
@@ -266,8 +283,14 @@ async function runScript(page) {
   // 5. The resolution ---------------------------------------------------
   await cap('You decide what goes in', 'Add only the item you asked for.');
   await sleep(2600);
+
+  const before = await run(() => window.sidecart.cart());
   await run(() => window.sidecart.choose('Add only'));
-  await sleep(2600);
+  // The tool runs as soon as it is approved, so watch the cart rather than
+  // guessing how long the model takes to write its closing sentence.
+  const changed = await run((t) => window.sidecart.cartChanged(t), before.total);
+  if (changed === null) throw new Error('The cart never changed after approval.');
+  await sleep(1800);
 
   const cart = await run(() => window.sidecart.cart());
   console.log('  cart:', JSON.stringify(cart));
